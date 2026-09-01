@@ -1,0 +1,62 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Send bot</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="nav">
+  <div class="brand">Send bot</div>
+  <a class="small-btn" href="{{ url_for('dashboard') if discord_user else url_for('login') }}">Dashboard</a>
+</header>
+
+<main>
+  <section class="hero">
+    <h1>Send bot</h1>
+    <p>One Discord bot for sending messages, forum posts, DMs, and creating virtual apps that can talk with your server.</p>
+    <a class="primary" href="{{ invite_url }}">Invite this bot to your server</a>
+    <p class="sub">Invite this bot to your server</p>
+  </section>
+
+  <section class="features">
+    <h2>Features</h2>
+    <div class="grid">
+      <div class="card"><b>Send a message</b><span>Send a message to a text channel or a forum.</span></div>
+      <div class="card"><b>Direct message</b><span>DM a user in the server.</span></div>
+      <div class="card"><b>Talking apps</b><span>Make up to 10 virtual apps that can talk to you.</span></div>
+      <div class="card"><b>Slash commands</b><span>Use Discord's / command menu instead of memorizing command syntax.</span></div>
+    </div>
+  </section>
+
+  <section class="donate">
+    <h2>Donate money</h2>
+    <form onsubmit="showDonate(event)">
+      <input id="amount" type="number" min="1" step="0.01" placeholder="Amount" required>
+      <select id="currency">
+        <option value="php">Php</option>
+        <option value="usd">$</option>
+      </select>
+      <button class="primary" type="submit">Donate</button>
+    </form>
+    <div id="donationResult" class="donation-result"></div>
+  </section>
+</main>
+
+<script>
+function showDonate(e) {
+  e.preventDefault();
+  const amount = document.getElementById('amount').value;
+  const currency = document.getElementById('currency').value;
+  const box = document.getElementById('donationResult');
+  if (currency === 'php') {
+    box.innerHTML = `<p><b>Send using GCash only</b></p><img class="qr" src="/static/gcash_qr.png" alt="GCash QR code">`;
+  } else {
+    box.innerHTML = `<p><b>Please make a ticket in our Support channel in our server to donate.</b></p><p><a href="https://discord.gg/s3ura5SkQ8" target="_blank" rel="noopener">Open Support server</a></p>`;
+  }
+}
+</script>
+</body>
+</html>
