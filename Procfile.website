@@ -1,1 +1,203 @@
-web: python website.py
+-- ADVANCED SERVER BROWSER V4 (Identifiers, Hover-Info, and Persistent ID)
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local Player = Players.LocalPlayer
+
+local HISTORY_FILE = "join_history.json"
+local joinHistory = {}
+
+-- Load History
+local success, content = pcall(function() return readfile(HISTORY_FILE) end)
+if success then joinHistory = HttpService:JSONDecode(content) end
+
+-- PERSISTENT TOP-RIGHT INFO (Always Visible)
+local PersistentGui = Instance.new("ScreenGui", Player.PlayerGui)
+PersistentGui.Name = "CurrentServerDisplay"
+local CurrentIDLabel = Instance.new("TextLabel", PersistentGui)
+CurrentIDLabel.Size = UDim2.new(0, 300, 0, 20)
+CurrentIDLabel.Position = UDim2.new(1, -310, 0, 10)
+CurrentIDLabel.BackgroundTransparency = 1
+CurrentIDLabel.Text = "CURRENT JOBID: " .. (game.JobId ~= "" and game.JobId or "Studio/Local")
+CurrentIDLabel.TextColor3 = Color3.new(1, 1, 1)
+CurrentIDLabel.TextTransparency = 0.5
+CurrentIDLabel.TextXAlignment = Enum.TextXAlignment.Right
+CurrentIDLabel.Font = Enum.Font.Code
+CurrentIDLabel.TextSize = 14
+
+-- MAIN UI SETUP
+local ScreenGui = Instance.new("ScreenGui", Player.PlayerGui)
+ScreenGui.Name = "AC_Test_Browser_V4"
+
+local MainContainer = Instance.new("Frame", ScreenGui)
+MainContainer.Size = UDim2.new(0, 480, 0, 400)
+MainContainer.Position = UDim2.new(0.5, -240, 0.5, -200)
+MainContainer.BackgroundTransparency = 1
+
+local Frame = Instance.new("Frame", MainContainer)
+Frame.Size = UDim2.new(1, 0, 1, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+Frame.BackgroundTransparency = 0.15
+Frame.BorderSizePixel = 0
+
+-- Soft rounded edges
+local FrameCorner = Instance.new("UICorner", Frame)
+FrameCorner.CornerRadius = UDim.new(0, 14)
+
+-- Black outline
+local Stroke = Instance.new("UIStroke", Frame)
+Stroke.Color = Color3.fromRGB(0, 0, 0)
+Stroke.Thickness = 3
+Stroke.Transparency = 0
+
+-- Black → Red gradient
+local Gradient = Instance.new("UIGradient", Frame)
+Gradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(10, 10, 10)),
+    ColorSequenceKeypoint.new(0.55, Color3.fromRGB(35, 5, 8)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(150, 15, 25))
+})
+Gradient.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 0.15),
+    NumberSequenceKeypoint.new(0.5, 0.2),
+    NumberSequenceKeypoint.new(1, 0.05)
+})
+Gradient.Rotation = 45
+
+local Title = Instance.new("TextLabel", Frame)
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Text = "Fang S Hub | SAE server hop"
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Title.BackgroundTransparency = 0.25
+Title.BorderSizePixel = 0
+
+local TitleCorner = Instance.new("UICorner", Title)
+TitleCorner.CornerRadius = UDim.new(0, 14)
+
+-- Keep the bottom corners of the title visually square
+local TitleCover = Instance.new("Frame", Title)
+TitleCover.Size = UDim2.new(1, 0, 0, 14)
+TitleCover.Position = UDim2.new(0, 0, 1, -14)
+TitleCover.BackgroundColor3 = Title.BackgroundColor3
+TitleCover.BackgroundTransparency = Title.BackgroundTransparency
+TitleCover.BorderSizePixel = 0
+
+local ToggleBtn = Instance.new("TextButton", MainContainer)
+ToggleBtn.Size = UDim2.new(0, 30, 0, 30)
+ToggleBtn.Position = UDim2.new(1, -35, 0, 5)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(180, 20, 30)
+ToggleBtn.BackgroundTransparency = 0.1
+ToggleBtn.Text = "-"
+ToggleBtn.TextColor3 = Color3.new(1, 1, 1)
+ToggleBtn.BorderSizePixel = 0
+
+local ToggleCorner = Instance.new("UICorner", ToggleBtn)
+ToggleCorner.CornerRadius = UDim.new(0, 8)
+
+local ToggleStroke = Instance.new("UIStroke", ToggleBtn)
+ToggleStroke.Color = Color3.fromRGB(0, 0, 0)
+ToggleStroke.Thickness = 2
+
+local ScrollingFrame = Instance.new("ScrollingFrame", Frame)
+ScrollingFrame.Size = UDim2.new(1, -20, 1, -60)
+ScrollingFrame.Position = UDim2.new(0, 10, 0, 50)
+ScrollingFrame.BackgroundTransparency = 1
+ScrollingFrame.BorderSizePixel = 0
+ScrollingFrame.ScrollBarThickness = 6
+
+local UIListLayout = Instance.new("UIListLayout", ScrollingFrame)
+UIListLayout.Padding = UDim.new(0, 5)
+
+-- DRAGGING LOGIC
+local dragging, dragStart, startPos
+ToggleBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainContainer.Position
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        MainContainer.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+ToggleBtn.MouseButton1Click:Connect(function()
+    Frame.Visible = not Frame.Visible
+    ToggleBtn.Text = Frame.Visible and "-" or "+"
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+end)
+
+-- REFRESH LOGIC
+local function refresh()
+    for _, child in pairs(ScrollingFrame:GetChildren()) do if child:IsA("Frame") then child:Destroy() end end
+
+    local url = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=50"
+    local ok, res = pcall(function() return game:HttpGet(url) end)
+
+    if ok then
+        local data = HttpService:JSONDecode(res)
+        for _, server in pairs(data.data) do
+            local sFrame = Instance.new("Frame", ScrollingFrame)
+            sFrame.Size = UDim2.new(1, -10, 0, 60)
+            sFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+
+            local lastJoined = joinHistory[server.id] or "Never"
+            
+            local info = Instance.new("TextLabel", sFrame)
+            info.Size = UDim2.new(0.6, 0, 1, 0)
+            info.Text = string.format(" Ping: %dms | Players: %d/%d\n Last Joined: %s", server.ping or 0, server.playing, server.maxPlayers, lastJoined)
+            info.TextColor3 = Color3.new(0.8, 0.8, 0.8)
+            info.TextSize = 12
+            info.BackgroundTransparency = 1
+            info.TextXAlignment = Enum.TextXAlignment.Left
+            info.Position = UDim2.new(0, 5, 0, 0)
+
+            -- THE "?" INFO BUTTON
+            local qBtn = Instance.new("TextButton", sFrame)
+            qBtn.Size = UDim2.new(0, 25, 0, 25)
+            qBtn.Position = UDim2.new(0.65, 0, 0.3, 0)
+            qBtn.Text = "?"
+            qBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+            qBtn.TextColor3 = Color3.new(1, 1, 1)
+
+            local idLabel = Instance.new("TextBox", sFrame) -- TextBox so you can copy the ID
+            idLabel.Size = UDim2.new(0.9, 0, 0, 20)
+            idLabel.Position = UDim2.new(0.05, 0, 1, -20)
+            idLabel.Text = server.id
+            idLabel.BackgroundTransparency = 0.2
+            idLabel.BackgroundColor3 = Color3.new(0,0,0)
+            idLabel.TextColor3 = Color3.new(1, 1, 0)
+            idLabel.Visible = false
+            idLabel.ClearTextOnFocus = false
+            idLabel.TextEditable = false
+
+            qBtn.MouseButton1Click:Connect(function()
+                idLabel.Visible = not idLabel.Visible
+            end)
+
+            local joinBtn = Instance.new("TextButton", sFrame)
+            joinBtn.Size = UDim2.new(0.25, 0, 0.5, 0)
+            joinBtn.Position = UDim2.new(0.72, 0, 0.25, 0)
+            joinBtn.Text = "JOIN"
+            joinBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
+
+            joinBtn.MouseButton1Click:Connect(function()
+                joinHistory[server.id] = os.date("%x %X")
+                writefile(HISTORY_FILE, HttpService:JSONEncode(joinHistory))
+                TeleportService:TeleportToPlaceInstance(game.PlaceId, server.id, Player)
+            end)
+        end
+        ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y)
+    end
+end
+
+refresh()
