@@ -127,10 +127,6 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
-ToggleBtn.MouseButton1Click:Connect(function()
-    Frame.Visible = not Frame.Visible
-    ToggleBtn.Text = Frame.Visible and "-" or "+"
-end)
 
 UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
@@ -160,25 +156,6 @@ local function refresh()
             info.BackgroundTransparency = 1
             info.TextXAlignment = Enum.TextXAlignment.Left
             info.Position = UDim2.new(0, 5, 0, 0)
-
-            -- THE "?" INFO BUTTON
-            local qBtn = Instance.new("TextButton", sFrame)
-            qBtn.Size = UDim2.new(0, 25, 0, 25)
-            qBtn.Position = UDim2.new(0.65, 0, 0.3, 0)
-            qBtn.Text = "?"
-            qBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-            qBtn.TextColor3 = Color3.new(1, 1, 1)
-
-            local idLabel = Instance.new("TextBox", sFrame) -- TextBox so you can copy the ID
-            idLabel.Size = UDim2.new(0.9, 0, 0, 20)
-            idLabel.Position = UDim2.new(0.05, 0, 1, -20)
-            idLabel.Text = server.id
-            idLabel.BackgroundTransparency = 0.2
-            idLabel.BackgroundColor3 = Color3.new(0,0,0)
-            idLabel.TextColor3 = Color3.new(1, 1, 0)
-            idLabel.Visible = false
-            idLabel.ClearTextOnFocus = false
-            idLabel.TextEditable = false
 
             qBtn.MouseButton1Click:Connect(function()
                 idLabel.Visible = not idLabel.Visible
